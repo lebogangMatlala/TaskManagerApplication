@@ -53,6 +53,9 @@ public class AuthService : IAuthService
         {
             Id = user.Id,
             Email = user.Email,
+            Name = user.Name,
+            Surname = user.Surname,
+            FullName = $"{user.Name} {user.Surname}".Trim(),
             Token = token
         };
     }
@@ -74,6 +77,9 @@ public class AuthService : IAuthService
         {
             Id = user.Id,
             Email = user.Email,
+            Name = user.Name,
+            Surname = user.Surname,
+            FullName = $"{user.Name} {user.Surname}".Trim(),
             Token = token
         };
     }

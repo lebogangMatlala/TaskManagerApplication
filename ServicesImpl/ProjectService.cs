@@ -121,17 +121,20 @@ namespace TaskManagerApplication.ServicesImpl
             };
         }
 
-        public async Task DeleteProjectAsync(int userId, int projectId)
+        public async Task<bool> DeleteProjectAsync(int userId, int projectId)
         {
+            // Find project that belongs to the user
             var project = await _context.Projects
-                .Include(p => p.Tasks)
+                .Include(p => p.Tasks) // include related tasks for cascade delete
                 .FirstOrDefaultAsync(p => p.Id == projectId && p.UserId == userId);
 
             if (project == null)
-                throw new KeyNotFoundException("Project not found");
+                return false; // not found or not owned by user
 
             _context.Projects.Remove(project);
             await _context.SaveChangesAsync();
+
+            return true; // successfully deleted
         }
     }
 }

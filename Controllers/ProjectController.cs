@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using TaskManagerApplication.DTOs;
+using TaskManagerApplication.Models;
 using TaskManagerApplication.Services;
+using TaskManagerApplication.ServicesImpl;
 
 namespace TaskManagerApplication.Controllers
 {
@@ -17,13 +20,21 @@ namespace TaskManagerApplication.Controllers
         {
             _projectService = projectService;
         }
-        
+
         private int GetUserId()
         {
-            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception("User ID not found in token"));
+            var userIdClaim =
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                User.FindFirstValue("sub");
+
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new Exception("User ID not found in token");
+
+            return int.Parse(userIdClaim);
         }
 
- 
+
+
         [HttpPost("CreateProject")]
         public async Task<IActionResult> Create([FromBody] CreateProjectDto dto)
         {
@@ -31,16 +42,25 @@ namespace TaskManagerApplication.Controllers
             var project = await _projectService.CreateProjectAsync(userId, dto);
             return Ok(project);
         }
-        
+
         [HttpGet("GetAllProjects")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(
+     [FromQuery] string search = null,
+     [FromQuery] ProjectStatus? status = null,
+     [FromQuery] int page = 1,
+     [FromQuery] int pageSize = 10)
         {
             var userId = GetUserId();
-            var projects = await _projectService.GetProjectsAsync(userId);
-            return Ok(projects);
+            var (projects, totalCount) = await _projectService.GetProjectsAsync(userId, search, status, page, pageSize);
+
+            return Ok(new
+            {
+                Projects = projects,
+                TotalCount = totalCount
+            });
         }
 
-        [HttpGet("GetProject{id}")]
+        [HttpGet("GetProject/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var userId = GetUserId();
@@ -48,7 +68,7 @@ namespace TaskManagerApplication.Controllers
             return Ok(project);
         }
 
-        [HttpPut("UpdateProject{id}")]
+        [HttpPut("UpdateProject/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateProjectDto dto)
         {
             var userId = GetUserId();
@@ -56,12 +76,21 @@ namespace TaskManagerApplication.Controllers
             return Ok(project);
         }
 
-        [HttpDelete("DeleteProject{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete("DeleteProject/{id}")]
+        public async Task<IActionResult> DeleteProject(int id)
         {
             var userId = GetUserId();
-            await _projectService.DeleteProjectAsync(userId, id);
-            return NoContent();
+
+            // Attempt to delete the project for the current user
+            var deleted = await _projectService.DeleteProjectAsync(userId, id);
+
+            if (!deleted)
+                return NotFound(new { Message = "Project not found or access denied." });
+
+            // Return a success message
+            return Ok(new { Message = $"Project with ID {id} successfully deleted." });
         }
+
+
     }
 }

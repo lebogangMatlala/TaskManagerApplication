@@ -11,5 +11,10 @@ namespace TaskManagerApplication.DTOs
         [Required]
         [MinLength(6)]
         public string Password { get; set; }
+
+        public string Name { get; set; }
+        public string Surname { get; set; }
+
+        
     }
 }

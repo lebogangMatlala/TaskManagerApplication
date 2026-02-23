@@ -14,6 +14,6 @@ namespace TaskManagerApplication.Services
            int pageSize = 10);
         Task<ProjectResponseDto> GetProjectByIdAsync(int userId, int projectId);
         Task<ProjectResponseDto> UpdateProjectAsync(int userId, int projectId, UpdateProjectDto dto);
-        Task DeleteProjectAsync(int userId, int projectId);
+        Task<bool> DeleteProjectAsync(int userId, int projectId);
     }
 }

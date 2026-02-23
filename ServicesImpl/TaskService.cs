@@ -27,19 +27,21 @@ namespace TaskManagerApplication.ServicesImpl
             ProjectName = task.Project?.Name
         };
 
-        public async Task<TaskResponseDto> CreateTaskAsync(int projectId, CreateTaskDto createTaskDto)
+        public async Task<TaskResponseDto> CreateTaskAsync(int projectId, CreateTaskDto dto, int userId)
         {
-            var project = await _context.Projects.FindAsync(projectId);
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == projectId && p.UserId == userId);
+
             if (project == null)
-                throw new KeyNotFoundException($"Project with ID {projectId} not found.");
+                throw new KeyNotFoundException($"Project not found or does not belong to user {userId}.");
 
             var task = new TaskItem
             {
-                Title = createTaskDto.Title,
-                Description = createTaskDto.Description,
-                Priority = createTaskDto.Priority,
-                Status = createTaskDto.Status,
-                DueDate = createTaskDto.DueDate,
+                Title = dto.Title,
+                Description = dto.Description,
+                Priority = dto.Priority,
+                Status = dto.Status,
+                DueDate = dto.DueDate,
                 ProjectId = projectId,
                 Project = project
             };
@@ -51,39 +53,32 @@ namespace TaskManagerApplication.ServicesImpl
         }
 
         public async Task<(List<TaskResponseDto> Tasks, int TotalCount)> GetTasksAsync(
-     int projectId,
-     string search = null,
-     Status? status = null,
-     TaskPriority? priority = null,
-     int page = 1,
-     int pageSize = 10)
+            int projectId,
+            int userId,
+            string search = null,
+            Status? status = null,
+            TaskPriority? priority = null,
+            int page = 1,
+            int pageSize = 10)
         {
             var query = _context.Tasks
-                .Where(t => t.ProjectId == projectId)
                 .Include(t => t.Project)
+                .Where(t => t.ProjectId == projectId && t.Project.UserId == userId)
                 .AsQueryable();
 
-            // Text search
             if (!string.IsNullOrWhiteSpace(search))
-            {
                 query = query.Where(t => t.Title.Contains(search) || t.Description.Contains(search));
-            }
 
-            // Status filter
             if (status.HasValue)
-            {
                 query = query.Where(t => t.Status == status.Value);
-            }
 
-            // Priority filter
             if (priority.HasValue)
-            {
                 query = query.Where(t => t.Priority == priority.Value);
-            }
 
             var totalCount = await query.CountAsync();
 
             var tasks = await query
+                .OrderBy(t => t.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -91,37 +86,31 @@ namespace TaskManagerApplication.ServicesImpl
             return (tasks.Select(MapToDto).ToList(), totalCount);
         }
 
-
-        public async Task<TaskResponseDto> GetTaskByIdAsync(int projectId, int taskId)
+        public async Task<TaskResponseDto> GetTaskByIdAsync(int projectId, int taskId, int userId)
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.ProjectId == projectId && t.Project.UserId == userId);
 
             if (task == null)
-                throw new KeyNotFoundException($"Task with ID {taskId} not found in project {projectId}.");
+                throw new KeyNotFoundException("Task not found or access denied.");
 
             return MapToDto(task);
         }
 
-        public async Task<TaskResponseDto> UpdateTaskAsync(int projectId, int taskId, UpdateTaskDto dto)
+        public async Task<TaskResponseDto> UpdateTaskAsync(int projectId, int taskId, UpdateTaskDto dto, int userId)
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId);
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.ProjectId == projectId && t.Project.UserId == userId);
 
             if (task == null)
-                throw new KeyNotFoundException($"Task with ID {taskId} not found in project {projectId}.");
+                throw new KeyNotFoundException("Task not found or access denied.");
 
             task.Title = dto.Title ?? task.Title;
             task.Description = dto.Description ?? task.Description;
-
-            if (dto.Priority.HasValue)
-                task.Priority = dto.Priority.Value;
-
-            if (dto.Status.HasValue)
-                task.Status = dto.Status.Value;
-
+            task.Priority = dto.Priority ?? task.Priority;
+            task.Status = dto.Status ?? task.Status;
             task.DueDate = dto.DueDate ?? task.DueDate;
 
             _context.Tasks.Update(task);
@@ -130,9 +119,12 @@ namespace TaskManagerApplication.ServicesImpl
             return MapToDto(task);
         }
 
-        public async Task<bool> DeleteTaskAsync(int projectId, int taskId)
+        public async Task<bool> DeleteTaskAsync(int projectId, int taskId, int userId)
         {
-            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.ProjectId == projectId && t.Id == taskId);
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.ProjectId == projectId && t.Project.UserId == userId);
+
             if (task == null) return false;
 
             _context.Tasks.Remove(task);
