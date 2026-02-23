@@ -438,3 +438,4 @@ C:\Users\LebogangMatlala.Lebogang\Desktop\interview-projects\csharp\TaskManagerA
 C:\Users\LebogangMatlala.Lebogang\Desktop\interview-projects\csharp\TaskManagerApplication\obj\Debug\net8.0\TaskManagerApplication.pdb
 C:\Users\LebogangMatlala.Lebogang\Desktop\interview-projects\csharp\TaskManagerApplication\obj\Debug\net8.0\TaskManagerApplication.genruntimeconfig.cache
 C:\Users\LebogangMatlala.Lebogang\Desktop\interview-projects\csharp\TaskManagerApplication\obj\Debug\net8.0\ref\TaskManagerApplication.dll
+C:\Users\LebogangMatlala.Lebogang\Desktop\interview-projects\csharp\TaskManagerApplication\obj\Debug\net8.0\TaskManagerApplication.sourcelink.json
