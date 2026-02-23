@@ -42,7 +42,7 @@ jobs:
       - name: Azure login
         uses: azure/login@v2
         with:
-          auth-type: 'service-principal'
+          auth-type: 'SERVICE_PRINCIPAL'
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
@@ -59,3 +59,4 @@ jobs:
           app-name: 'TaskManagerAPI'
           slot-name: 'Production'
           package: publish_output
+
