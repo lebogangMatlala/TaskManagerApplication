@@ -9,17 +9,17 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1️⃣ Checkout the repo
+      # 1️⃣ Checkout repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup .NET SDK
+      # 2️⃣ Setup .NET 8 SDK
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      # 3️⃣ Restore dependencies
+      # 3️⃣ Restore NuGet packages
       - name: Restore dependencies
         run: dotnet restore TaskManagerApplication.sln
 
@@ -31,24 +31,24 @@ jobs:
       - name: Publish project
         run: dotnet publish TaskManagerApplication.sln --configuration Release --output publish_output
 
-      # 6️⃣ Upload artifact for deployment
+      # 6️⃣ Upload artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-app
           path: publish_output
 
-      # 7️⃣ Login to Azure using Service Principal secrets
+      # 7️⃣ Login to Azure using Service Principal
       - name: Azure login
         uses: azure/login@v2
         with:
-          auth-type: 'SERVICE_PRINCIPAL'
+          auth-type: 'SERVICE_PRINCIPAL'  # ✅ must be exactly like this
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENTSECRET }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
-          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENTSECRET }}
 
-      # 8️⃣ Optional: test login
+      # 8️⃣ Optional: verify login
       - name: Test Azure login
         run: az account show
 
@@ -56,7 +56,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'TaskManagerAPI'
+          app-name: 'TaskManagerAPI'   # ✅ Replace with your actual App Service name
           slot-name: 'Production'
           package: publish_output
-
