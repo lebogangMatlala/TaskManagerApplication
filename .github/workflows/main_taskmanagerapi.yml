@@ -6,27 +6,36 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read  # needed to checkout code
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # Setup .NET SDK
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
+      # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore TaskManagerApplication.sln
 
+      # Build solution
       - name: Build solution
         run: dotnet build TaskManagerApplication.sln --configuration Release --no-restore
 
+      # Publish project
       - name: Publish project
-        working-directory: TaskManagerApplication
-        run: dotnet publish TaskManagerApplication.csproj --configuration Release --output ../publish_output
+        run: dotnet publish TaskManagerApplication/TaskManagerApplication.csproj --configuration Release --output publish_output
 
+      # Upload artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -37,11 +46,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      # Download artifact
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: dotnet-app
 
+      # Login to Azure using Service Principal
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -51,9 +62,15 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
           client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENTSECRET }}
 
+      # Optional: verify login
+      - name: Test Azure login
+        run: az account show
+
+      # Deploy to Azure Web App
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'TaskManagerAPI'
+          app-name: 'TaskManagerAPI'   # Your Azure App Service name
           slot-name: 'Production'
-          package: publish_output
+          package: ${{ github.workspace }}/publish_output
+
