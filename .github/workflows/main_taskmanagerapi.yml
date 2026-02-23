@@ -9,31 +9,38 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      # Checkout code
-      - uses: actions/checkout@v4
+      # 1️⃣ Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Setup .NET SDK
-      - uses: actions/setup-dotnet@v4
+      # 2️⃣ Setup .NET SDK
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      # Restore dependencies
-      - run: dotnet restore TaskManagerApplication.sln
+      # 3️⃣ Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore TaskManagerApplication.sln
 
-      # Build solution
-      - run: dotnet build TaskManagerApplication.sln --configuration Release --no-restore
+      # 4️⃣ Build solution
+      - name: Build solution
+        run: dotnet build TaskManagerApplication.sln --configuration Release --no-restore
 
-      # Publish project
-      - run: dotnet publish TaskManagerApplication.sln --configuration Release --output publish_output
+      # 5️⃣ Publish project
+      - name: Publish project
+        run: dotnet publish TaskManagerApplication.sln --configuration Release --output publish_output
 
-      # Upload artifact
-      - uses: actions/upload-artifact@v4
+      # 6️⃣ Upload artifact for deployment
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: dotnet-app
           path: publish_output
 
-      # Login to Azure using your four secrets
-      - uses: azure/login@v2
+      # 7️⃣ Login to Azure using Service Principal secrets
+      - name: Azure login
+        uses: azure/login@v2
         with:
           auth-type: 'service-principal'
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
@@ -41,15 +48,13 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
           client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENTSECRET }}
 
-      # Optional: test login
-      - uses: azure/cli@v2
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az account show
+      # 8️⃣ Optional: test login
+      - name: Test Azure login
+        run: az account show
 
-      # Deploy to Azure Web App
-      - uses: azure/webapps-deploy@v3
+      # 9️⃣ Deploy to Azure Web App
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
         with:
           app-name: 'TaskManagerAPI'
           slot-name: 'Production'
