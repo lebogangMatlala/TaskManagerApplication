@@ -1,0 +1,67 @@
+name: Build and Deploy ASP.Net Core App - TaskManagerAPI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - uses: actions/checkout@v4
+
+      # Setup .NET SDK
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore TaskManagerApplication.sln
+
+      # Build the project
+      - name: Build project
+        run: dotnet build TaskManagerApplication.sln --configuration Release --no-restore
+
+      # Publish the project
+      - name: Publish project
+        run: dotnet publish TaskManagerApplication/TaskManagerApplication.csproj --configuration Release --output publish_output
+
+      # Upload artifact for deployment
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: publish_output
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      # Download published artifact
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-app
+          path: publish_output
+
+      # Login to Azure
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENTSECRET }}
+
+      # Deploy to Azure Web App
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'TaskManagerAPI'
+          slot-name: 'Production'
+          package: publish_output
