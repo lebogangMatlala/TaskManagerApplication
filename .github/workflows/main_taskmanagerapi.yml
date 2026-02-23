@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - TaskManagerAPI
+name: Build and Deploy ASP.Net Core App - TaskManagerAPI
 
 on:
   push:
@@ -12,54 +9,63 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      # Checkout the repo
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      # Setup .NET SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore TaskManagerApplication/TaskManagerApplication.csproj
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      # Build project
+      - name: Build
+        run: dotnet build TaskManagerApplication/TaskManagerApplication.csproj --configuration Release --no-restore
 
-      - name: Upload artifact for deployment job
+      # Publish project
+      - name: Publish
+        run: dotnet publish TaskManagerApplication/TaskManagerApplication.csproj -c Release -o ./publish
+
+      # Upload artifact for deployment
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: taskmanagerapi
+          path: ./publish
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
     steps:
-      - name: Download artifact from build job
+      # Checkout (needed for GitHub Actions workspace)
+      - uses: actions/checkout@v4
+
+      # Download the published artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
-      
-      - name: Login to Azure
+          name: taskmanagerapi
+          path: ./publish
+
+      # Login to Azure
+      - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_CF26444192B640A78775DF9E23876FD4 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C3BF9AB5F4EC4AD7A2D5CA764410C094 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9A819AA0CCE243D7AF4DBB29BFD7F52A }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
+      # Deploy to Azure Web App
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'TaskManagerAPI'
-          slot-name: 'Production'
-          package: .
-          
+          app-name: 'TaskManagerAPI'      # your Azure App Service name
+          slot-name: 'Production'         # optional if you use slots
+          package: ./publish
