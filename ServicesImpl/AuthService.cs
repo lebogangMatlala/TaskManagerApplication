@@ -38,7 +38,11 @@ public class AuthService : IAuthService
         var user = new User
         {
             Email = dto.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            Name = dto.Name,
+            Surname = dto.Surname,
+
+
         };
 
         _context.Users.Add(user);
@@ -49,13 +53,16 @@ public class AuthService : IAuthService
 
         Console.WriteLine($"[DEBUG] JWT Token for {user.Email}: {token}");
         // 5️⃣ Return response DTO
+        var safeName = string.IsNullOrWhiteSpace(user.Name) ? "No Name" : user.Name;
+        var safeSurname = string.IsNullOrWhiteSpace(user.Surname) ? "No Surname" : user.Surname;
+
         return new UserResponseDto
         {
             Id = user.Id,
             Email = user.Email,
-            Name = user.Name,
-            Surname = user.Surname,
-            FullName = $"{user.Name} {user.Surname}".Trim(),
+            Name = safeName,
+            Surname = safeSurname,
+            FullName = $"{safeName} {safeSurname}".Trim(),
             Token = token
         };
     }
@@ -73,13 +80,16 @@ public class AuthService : IAuthService
         var token = GenerateJwtToken(user);
 
         // 4️⃣ Return response DTO
+        var safeName = string.IsNullOrWhiteSpace(user.Name) ? "No Name" : user.Name;
+        var safeSurname = string.IsNullOrWhiteSpace(user.Surname) ? "No Surname" : user.Surname;
+
         return new UserResponseDto
         {
             Id = user.Id,
             Email = user.Email,
-            Name = user.Name,
-            Surname = user.Surname,
-            FullName = $"{user.Name} {user.Surname}".Trim(),
+            Name = safeName,
+            Surname = safeSurname,
+            FullName = $"{safeName} {safeSurname}".Trim(),
             Token = token
         };
     }
@@ -136,13 +146,17 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
 
+        var safeName = string.IsNullOrWhiteSpace(user.Name) ? "No Name" : user.Name;
+        var safeSurname = string.IsNullOrWhiteSpace(user.Surname) ? "No Surname" : user.Surname;
+
         return new UserResponseDto
         {
             Id = user.Id,
-            Name = user.Name,
             Email = user.Email,
-            Surname = user.Surname,
-            FullName = $"{user.Name} {user.Surname}".Trim(),
+            Name = safeName,
+            Surname = safeSurname,
+            FullName = $"{safeName} {safeSurname}".Trim(),
+           
         };
     }
 
