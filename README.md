@@ -2,50 +2,18 @@ TaskManager API (Backend)
 
 TaskManager is a RESTful API built with ASP.NET Core for managing projects, tasks, and user authentication. It provides endpoints for user registration, login, profile management, project and task CRUD operations, with JWT-based authentication.
 
-Table of Contents
-
-Features
-
-Tech Stack
-
-Getting Started
-
-API Endpoints
-
-Authentication
-
-Database
-
-Environment Variables
-
-Running Tests
-
-Deployment
-
-Contributing
-
-License
-
 Features
 
 User Management: Register, Login, Update Profile, Delete Account.
-
 Projects: Create, Read, Update, Delete projects.
-
 Tasks: Create, Read, Update, Delete tasks under specific projects.
-
 Status Management: Task statuses such as Pending, InProgress, Done, Cancelled.
-
 JWT Authentication: Secure API access with token-based authentication.
-
 Swagger UI: API documentation for easy testing.
 
 Tech Stack
-
 Backend: ASP.NET Core 8.0
-
 Database: Entity Framework Core with SQL Server
-
 Authentication: JWT Bearer Tokens
 
 API Documentation: Swagger / OpenAPI
@@ -60,32 +28,20 @@ SQL Server or SQL Server Express
 Postman or Swagger UI for testing
 
 Installation
-
 Clone the repository:
-
 git clone https://github.com/yourusername/TaskManagerBackend.git
 cd TaskManagerBackend
-
-Restore packages:
-
-dotnet restore
-
+Restore packages: dotnet restore
 Update the appsettings.json connection string:
 
 "ConnectionStrings": {
   "DefaultConnection": "Server=YOUR_SERVER;Database=TaskManagerDB;Trusted_Connection=True;"
 }
+Apply migrations: dotnet ef database update
 
-Apply migrations:
-
-dotnet ef database update
-
-Run the API:
-
-dotnet run
+Run the API: dotnet run
 
 By default, Swagger will be available at:
-
 https://localhost:5001/swagger/index.html
 API Endpoints
 Authentication
