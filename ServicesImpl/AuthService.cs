@@ -123,4 +123,38 @@ public class AuthService : IAuthService
         return tokenString;
     }
 
+    // ================= UPDATE PROFILE =================
+    public async Task<UserResponseDto> UpdateProfileAsync(int userId, RegisterDto dto)
+    {
+        var user = await _context.Users.FindAsync(userId)
+            ?? throw new Exception("User not found");
+
+        user.Name = dto.Name;
+        user.Surname = dto.Surname;
+        user.Email = dto.Email;
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+        await _context.SaveChangesAsync();
+
+        return new UserResponseDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Surname = user.Surname,
+            FullName = $"{user.Name} {user.Surname}".Trim(),
+        };
+    }
+
+    // ================= DELETE ACCOUNT =================
+    public async Task<bool> DeleteUserAsync(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId)
+            ?? throw new Exception("User not found");
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }
